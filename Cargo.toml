@@ -1,0 +1,20 @@
+[package]
+name = "libdragon"
+version = "0.1.0"
+edition = "2024"
+license = "Unlicense"
+
+[features]
+debug = []
+default = ["debug"]
+
+[dependencies]
+bitflags = "2.9.3"
+cstr = "0.2.12"
+embedded-io = { version = "0.6.1", features = ["alloc"] }
+sys = { path = "./sys", package = "libdragon-sys" }
+paste = "1.0.15"
+
+[workspace]
+members = ["sys", "t3d", "t3d/sys"]
+

@@ -1,0 +1,10 @@
+[package]
+name = "tiny3d"
+version = "0.1.0"
+edition = "2024"
+license = "Unlicense"
+
+[dependencies]
+bitflags = "2.9.3"
+dragon = { path = "../", package = "libdragon" }
+sys = { path = "./sys", package = "tiny3d-sys" }

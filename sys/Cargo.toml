@@ -1,0 +1,8 @@
+[package]
+name = "libdragon-sys"
+version = "0.1.0"
+edition = "2024"
+license = "Unlicense"
+links = "dragon"
+
+[dependencies]
