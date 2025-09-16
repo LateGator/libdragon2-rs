@@ -3,6 +3,7 @@ use core::{cell::UnsafeCell, marker::PhantomData, ptr::NonNull};
 use dragon::{
     fmath::{Quat, Vec3},
     graphics::Color,
+    rdpq::{Blender, Combiner, SOM, SOMMask},
     rspq::BlockRef,
 };
 
@@ -115,7 +116,7 @@ impl Model {
         unsafe { BlockRef::from_raw((*self.0.as_ptr()).userBlock) }
     }
     #[inline]
-    pub fn set_rspq_block(&mut self, block: dragon::rspq::Block) {
+    pub fn set_rspq_block(&self, block: dragon::rspq::Block) {
         let model = self.0.as_ptr();
         unsafe {
             let block = core::mem::ManuallyDrop::new(block).as_raw();
@@ -387,6 +388,26 @@ impl Material {
         unsafe { core::ffi::CStr::from_ptr((*self.0.get()).name) }
     }
     #[inline]
+    pub const fn combine_mode(&self) -> Combiner {
+        unsafe { Combiner::new_unchecked((*self.0.get()).colorCombiner) }
+    }
+    #[inline]
+    pub const fn blend_mode(&self) -> Blender {
+        unsafe { Blender::new_unchecked((*self.0.get()).blendMode) }
+    }
+    #[inline]
+    pub const fn other_modes(&self) -> SOM {
+        SOM::from_bits_retain(unsafe { (*self.0.get()).otherModeValue })
+    }
+    #[inline]
+    pub const fn other_modes_mask(&self) -> SOMMask {
+        SOMMask::from_bits_retain(unsafe { (*self.0.get()).otherModeMask })
+    }
+    #[inline]
+    pub const fn render_flags(&self) -> crate::DrawFlags {
+        crate::DrawFlags::from_bits_retain(unsafe { (*self.0.get()).renderFlags })
+    }
+    #[inline]
     pub const fn fog_mode(&self) -> FogMode {
         unsafe { core::mem::transmute((*self.0.get()).fogMode) }
     }
@@ -405,6 +426,26 @@ impl Material {
     #[inline]
     pub const fn blend_color(&self) -> Color {
         Color::from_raw(unsafe { (*self.0.get()).blendColor })
+    }
+    #[inline]
+    pub const fn set_combine_mode(&self, combiner: Combiner) {
+        unsafe { (*self.0.get()).colorCombiner = combiner.into_inner() };
+    }
+    #[inline]
+    pub const fn set_blend_mode(&self, blender: Blender) {
+        unsafe { (*self.0.get()).blendMode = blender.into_inner() };
+    }
+    #[inline]
+    pub const fn set_other_modes(&self, som: SOM) {
+        unsafe { (*self.0.get()).otherModeValue = som.bits() };
+    }
+    #[inline]
+    pub const fn set_other_modes_mask(&self, mask: SOMMask) {
+        unsafe { (*self.0.get()).otherModeMask = mask.bits() };
+    }
+    #[inline]
+    pub const fn set_render_flags(&self, flags: crate::DrawFlags) {
+        unsafe { (*self.0.get()).renderFlags = flags.bits() };
     }
     #[inline]
     pub const fn set_fog_mode(&self, fog_mode: FogMode) {
@@ -484,7 +525,7 @@ impl Object {
         }
     }
     #[inline]
-    pub fn set_rspq_block(&mut self, block: dragon::rspq::Block) {
+    pub fn set_rspq_block(&self, block: dragon::rspq::Block) {
         let obj = self.0.get();
         unsafe {
             let block = core::mem::ManuallyDrop::new(block).as_raw();

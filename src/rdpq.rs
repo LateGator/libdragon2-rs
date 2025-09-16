@@ -915,7 +915,8 @@ impl<'r> RdpQ<'r> {
     }
     #[doc = "Low-level function to partly change the rendering mode register.\n\n This function is very low level and requires very good knowledge of internal\n RDP state management.\n\n It allows to partially change the RDP render mode register, enqueuing a\n command that will modify only the requested bits. This function\n is to be preferred to `rdpq_set_other_modes_raw` as it preservers existing\n render mode for all the other bits, so it allows for easier composition.\n\n @note If possible, prefer using the RDPQ mode API (defined in rdpq_mode.h),\n that expose a higher level API for changing the RDP modes\n\n @param[in] mask          Mask of bits of the SOM register that must be changed\n @param[in] val           New value for the bits selected by the mask.\n"]
     #[inline]
-    pub fn change_other_modes_raw(&mut self, mask: u64, val: SOM) {
+    pub fn change_other_modes_raw(&mut self, mask: SOMMask, val: SOM) {
+        let mask = mask.bits();
         let hi = (mask >> 32) as u32;
         let lo = mask as u32;
         let val = val.bits();
@@ -1825,12 +1826,8 @@ pub mod tri {
 bitflags::bitflags! {
     #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
     pub struct SOM: u64 {
-        #[doc = "Rdpq extension: number of LODs"]
-        const NUMLODS_MASK = SOMX_NUMLODS_MASK as u64;
-        #[doc = "Rdpq extension: number of LODs shift"]
-        const NUMLODS_SHIFT = SOMX_NUMLODS_SHIFT as u64;
         #[doc = "RDPQ special state: fogging is enabled"]
-        const FOG = SOMX_FOG as u64;
+        const X_FOG = SOMX_FOG as u64;
 
         #[doc = "Atomic: serialize command execution "]
         const ATOMIC_PRIM = SOM_ATOMIC_PRIM as u64;
@@ -1843,10 +1840,6 @@ bitflags::bitflags! {
         const CYCLE_COPY = SOM_CYCLE_COPY as u64;
         #[doc = "Set cycle-type: fill"]
         const CYCLE_FILL = SOM_CYCLE_FILL as u64;
-        #[doc = "Cycle-type mask"]
-        const CYCLE_MASK = SOM_CYCLE_MASK as u64;
-        #[doc = "Cycle-type shift"]
-        const CYCLE_SHIFT = SOM_CYCLE_SHIFT as u64;
 
         #[doc = "Texture: enable perspective correction"]
         const TEXTURE_PERSP = SOM_TEXTURE_PERSP as u64;
@@ -1856,8 +1849,6 @@ bitflags::bitflags! {
         const TEXTURE_SHARPEN = SOM_TEXTURE_SHARPEN as u64;
         #[doc = "Texture: enable LODs."]
         const TEXTURE_LOD = SOM_TEXTURE_LOD as u64;
-        #[doc = "Texture: LODs shift"]
-        const TEXTURE_LOD_SHIFT = SOM_TEXTURE_LOD_SHIFT as u64;
 
         #[doc = "TLUT: no palettes"]
         const TLUT_NONE = SOM_TLUT_NONE as u64;
@@ -1865,10 +1856,6 @@ bitflags::bitflags! {
         const TLUT_RGBA16 = SOM_TLUT_RGBA16 as u64;
         #[doc = "TLUT: draw with palettes in format IA16"]
         const TLUT_IA16 = SOM_TLUT_IA16 as u64;
-        #[doc = "TLUT mask"]
-        const TLUT_MASK = SOM_TLUT_MASK as u64;
-        #[doc = "TLUT mask shift"]
-        const TLUT_SHIFT = SOM_TLUT_SHIFT as u64;
 
         #[doc = "Texture sampling: point sampling (1x1)"]
         const SAMPLE_POINT = SOM_SAMPLE_POINT as u64;
@@ -1876,10 +1863,6 @@ bitflags::bitflags! {
         const SAMPLE_BILINEAR = SOM_SAMPLE_BILINEAR as u64;
         #[doc = "Texture sampling: mid-texel average (2x2)"]
         const SAMPLE_MEDIAN = SOM_SAMPLE_MEDIAN as u64;
-        #[doc = "Texture sampling mask"]
-        const SAMPLE_MASK = SOM_SAMPLE_MASK as u64;
-        #[doc = "Texture sampling mask shift"]
-        const SAMPLE_SHIFT = SOM_SAMPLE_SHIFT as u64;
 
         #[doc = "Texture Filter, cycle 0 (TEX0): standard fetching (for RGB)"]
         const TF0_RGB = SOM_TF0_RGB as u64;
@@ -1891,10 +1874,6 @@ bitflags::bitflags! {
         const TF1_YUV = SOM_TF1_YUV as u64;
         #[doc = "Texture Filter, cycle 1 (TEX1): don't fetch, and instead do color conversion on TEX0 (allows YUV with bilinear filtering)"]
         const TF1_YUVTEX0 = SOM_TF1_YUVTEX0 as u64;
-        #[doc = "Texture Filter mask"]
-        const TF_MASK = SOM_TF_MASK as u64;
-        #[doc = "Texture filter mask shift"]
-        const TF_SHIFT = SOM_TF_SHIFT as u64;
 
         #[doc = "RGB Dithering: square filter"]
         const RGBDITHER_SQUARE = SOM_RGBDITHER_SQUARE as u64;
@@ -1904,10 +1883,6 @@ bitflags::bitflags! {
         const RGBDITHER_NOISE = SOM_RGBDITHER_NOISE as u64;
         #[doc = "RGB Dithering: none"]
         const RGBDITHER_NONE = SOM_RGBDITHER_NONE as u64;
-        #[doc = "RGB Dithering mask"]
-        const RGBDITHER_MASK = SOM_RGBDITHER_MASK as u64;
-        #[doc = "RGB Dithering mask shift"]
-        const RGBDITHER_SHIFT = SOM_RGBDITHER_SHIFT as u64;
 
         #[doc = "Alpha Dithering: same as RGB"]
         const ALPHADITHER_SAME = SOM_ALPHADITHER_SAME as u64;
@@ -1917,33 +1892,18 @@ bitflags::bitflags! {
         const ALPHADITHER_NOISE = SOM_ALPHADITHER_NOISE as u64;
         #[doc = "Alpha Dithering: none"]
         const ALPHADITHER_NONE = SOM_ALPHADITHER_NONE as u64;
-        #[doc = "Alpha Dithering mask"]
-        const ALPHADITHER_MASK = SOM_ALPHADITHER_MASK as u64;
-        #[doc = "Alpha Dithering mask shift"]
-        const ALPHADITHER_SHIFT = SOM_ALPHADITHER_SHIFT as u64;
 
         #[doc = "RDPQ special state: mimap interpolation (aka trilinear) requested"]
-        const LOD_INTERPOLATE = SOMX_LOD_INTERPOLATE as u64;
+        const X_LOD_INTERPOLATE = SOMX_LOD_INTERPOLATE as u64;
         #[doc = "RDPQ special state: mimap interpolation for SHC texture format"]
-        const LOD_INTERPOLATE_SHQ = SOMX_LOD_INTERPOLATE_SHQ as u64;
-        #[doc = "RDPQ special state: mask for LOD interpolation formulas"]
-        const LOD_INTERP_MASK = SOMX_LOD_INTERP_MASK as u64;
-        #[doc = "RDPQ special state: shift for LOD interpolation formulas"]
-        const LOD_INTERP_SHIFT = SOMX_LOD_INTERP_SHIFT as u64;
+        const X_LOD_INTERPOLATE_SHQ = SOMX_LOD_INTERPOLATE_SHQ as u64;
         #[doc = "RDPQ special state: reduced antialiasing is enabled"]
-        const AA_REDUCED = SOMX_AA_REDUCED as u64;
+        const X_AA_REDUCED = SOMX_AA_REDUCED as u64;
         #[doc = "RDPQ special state: render mode update is frozen (see #rdpq_mode_begin)"]
-        const UPDATE_FREEZE = SOMX_UPDATE_FREEZE as u64;
-
-        #[doc = "Blender: mask of settings related to pass 0"]
-        const BLEND0_MASK = SOM_BLEND0_MASK as u64;
-        #[doc = "Blender: mask of settings related to pass 1"]
-        const BLEND1_MASK = SOM_BLEND1_MASK as u64;
-        #[doc = "Blender: mask of all settings"]
-        const BLEND_MASK = SOM_BLEND_MASK as u64;
+        const X_UPDATE_FREEZE = SOMX_UPDATE_FREEZE as u64;
 
         #[doc = "RDPQ special state: record that the blender is made of 2 passes"]
-        const BLEND_2PASS = SOMX_BLEND_2PASS as u64;
+        const X_BLEND_2PASS = SOMX_BLEND_2PASS as u64;
 
         #[doc = "Activate blending for all pixels"]
         const BLENDING = SOM_BLENDING as u64;
@@ -1954,10 +1914,6 @@ bitflags::bitflags! {
         const BLALPHA_CVG = SOM_BLALPHA_CVG as u64;
         #[doc = "Blender IN_ALPHA is the product of the combiner output and the coverage"]
         const BLALPHA_CVG_TIMES_CC = SOM_BLALPHA_CVG_TIMES_CC as u64;
-        #[doc = "Blender alpha configuration mask"]
-        const BLALPHA_MASK = SOM_BLALPHA_MASK as u64;
-        #[doc = "Blender alpha configuration shift"]
-        const BLALPHA_SHIFT = SOM_BLALPHA_SHIFT as u64;
 
         #[doc = "Z-mode: opaque surface"]
         const ZMODE_OPAQUE = SOM_ZMODE_OPAQUE as u64;
@@ -1967,29 +1923,17 @@ bitflags::bitflags! {
         const ZMODE_TRANSPARENT = SOM_ZMODE_TRANSPARENT as u64;
         #[doc = "Z-mode: decal surface"]
         const ZMODE_DECAL = SOM_ZMODE_DECAL as u64;
-        #[doc = "Z-mode mask"]
-        const ZMODE_MASK = SOM_ZMODE_MASK as u64;
-        #[doc = "Z-mode mask shift"]
-        const ZMODE_SHIFT = SOM_ZMODE_SHIFT as u64;
 
         #[doc = "Activate Z-buffer write"]
         const Z_WRITE = SOM_Z_WRITE as u64;
-        #[doc = "Z-buffer write bit shift"]
-        const Z_WRITE_SHIFT = SOM_Z_WRITE_SHIFT as u64;
 
         #[doc = "Activate Z-buffer compare"]
         const Z_COMPARE = SOM_Z_COMPARE as u64;
-        #[doc = "Z-buffer compare bit shift"]
-        const Z_COMPARE_SHIFT = SOM_Z_COMPARE_SHIFT as u64;
 
         #[doc = "Z-source: per-pixel Z"]
         const ZSOURCE_PIXEL = SOM_ZSOURCE_PIXEL as u64;
         #[doc = "Z-source: fixed value"]
         const ZSOURCE_PRIM = SOM_ZSOURCE_PRIM as u64;
-        #[doc = "Z-source mask"]
-        const ZSOURCE_MASK = SOM_ZSOURCE_MASK as u64;
-        #[doc = "Z-source mask shift"]
-        const ZSOURCE_SHIFT = SOM_ZSOURCE_SHIFT as u64;
 
         #[doc = "Alpha Compare: disable"]
         const ALPHACOMPARE_NONE = SOM_ALPHACOMPARE_NONE as u64;
@@ -1997,10 +1941,6 @@ bitflags::bitflags! {
         const ALPHACOMPARE_THRESHOLD = SOM_ALPHACOMPARE_THRESHOLD as u64;
         #[doc = "Alpha Compare: use noise as threshold"]
         const ALPHACOMPARE_NOISE = SOM_ALPHACOMPARE_NOISE as u64;
-        #[doc = "Alpha Compare mask"]
-        const ALPHACOMPARE_MASK = SOM_ALPHACOMPARE_MASK as u64;
-        #[doc = "Alpha Compare mask shift"]
-        const ALPHACOMPARE_SHIFT = SOM_ALPHACOMPARE_SHIFT as u64;
 
         #[doc = "Enable reads from framebuffer"]
         const READ_ENABLE = SOM_READ_ENABLE as u64;
@@ -2015,11 +1955,114 @@ bitflags::bitflags! {
         const COVERAGE_DEST_ZAP = SOM_COVERAGE_DEST_ZAP as u64;
         #[doc = "Coverage: save (don't write)"]
         const COVERAGE_DEST_SAVE = SOM_COVERAGE_DEST_SAVE as u64;
-        #[doc = "Coverage mask"]
-        const COVERAGE_DEST_MASK = SOM_COVERAGE_DEST_MASK as u64;
-        #[doc = "Coverage mask shift"]
-        const COVERAGE_DEST_SHIFT = SOM_COVERAGE_DEST_SHIFT as u64;
 
+        #[doc = "Update color buffer only on coverage overflow"]
+        const COLOR_ON_CVG_OVERFLOW = SOM_COLOR_ON_CVG_OVERFLOW as u64;
+    }
+}
+
+impl SOM {
+    #[doc = "Rdpq extension: number of LODs shift"]
+    pub const X_NUMLODS_SHIFT: u32 = SOMX_NUMLODS_SHIFT;
+    #[doc = "Cycle-type shift"]
+    pub const CYCLE_SHIFT: u32 = SOM_CYCLE_SHIFT;
+    #[doc = "Texture: LODs shift"]
+    pub const TEXTURE_LOD_SHIFT: u32 = SOM_TEXTURE_LOD_SHIFT;
+    #[doc = "TLUT mask shift"]
+    pub const TLUT_SHIFT: u32 = SOM_TLUT_SHIFT;
+    #[doc = "Texture sampling mask shift"]
+    pub const SAMPLE_SHIFT: u32 = SOM_SAMPLE_SHIFT;
+    #[doc = "Texture filter mask shift"]
+    pub const TF_SHIFT: u32 = SOM_TF_SHIFT;
+    #[doc = "RGB Dithering mask shift"]
+    pub const RGBDITHER_SHIFT: u32 = SOM_RGBDITHER_SHIFT;
+    #[doc = "Alpha Dithering mask shift"]
+    pub const ALPHADITHER_SHIFT: u32 = SOM_ALPHADITHER_SHIFT;
+    #[doc = "RDPQ special state: shift for LOD interpolation formulas"]
+    pub const X_LOD_INTERP_SHIFT: u32 = SOMX_LOD_INTERP_SHIFT;
+    #[doc = "Blender alpha configuration shift"]
+    pub const BLALPHA_SHIFT: u32 = SOM_BLALPHA_SHIFT;
+    #[doc = "Z-mode mask shift"]
+    pub const ZMODE_SHIFT: u32 = SOM_ZMODE_SHIFT;
+    #[doc = "Z-buffer write bit shift"]
+    pub const Z_WRITE_SHIFT: u32 = SOM_Z_WRITE_SHIFT;
+    #[doc = "Z-buffer compare bit shift"]
+    pub const Z_COMPARE_SHIFT: u32 = SOM_Z_COMPARE_SHIFT;
+    #[doc = "Z-source mask shift"]
+    pub const ZSOURCE_SHIFT: u32 = SOM_ZSOURCE_SHIFT;
+    #[doc = "Alpha Compare mask shift"]
+    pub const ALPHACOMPARE_SHIFT: u32 = SOM_ALPHACOMPARE_SHIFT;
+    #[doc = "Coverage mask shift"]
+    pub const COVERAGE_DEST_SHIFT: u32 = SOM_COVERAGE_DEST_SHIFT;
+    #[inline]
+    pub fn insert_blender(&mut self, blender: Blender) {
+        self.insert(SOM::from_bits_retain(blender.into_inner() as u64));
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
+    pub struct SOMMask: u64 {
+        #[doc = "Rdpq extension: number of LODs"]
+        const X_NUMLODS = SOMX_NUMLODS_MASK as u64;
+        #[doc = "RDPQ special state: fogging is enabled"]
+        const X_FOG = SOMX_FOG as u64;
+        #[doc = "Atomic: serialize command execution "]
+        const ATOMIC_PRIM = SOM_ATOMIC_PRIM as u64;
+        #[doc = "Cycle-type mask"]
+        const CYCLE = SOM_CYCLE_MASK as u64;
+        #[doc = "Texture: enable perspective correction"]
+        const TEXTURE_PERSP = SOM_TEXTURE_PERSP as u64;
+        #[doc = "Texture: enable 'detail'"]
+        const TEXTURE_DETAIL = SOM_TEXTURE_DETAIL as u64;
+        #[doc = "Texture: enable 'sharpen'"]
+        const TEXTURE_SHARPEN = SOM_TEXTURE_SHARPEN as u64;
+        #[doc = "Texture: enable LODs."]
+        const TEXTURE_LOD = SOM_TEXTURE_LOD as u64;
+        #[doc = "TLUT mask"]
+        const TLUT = SOM_TLUT_MASK as u64;
+        #[doc = "Texture sampling mask"]
+        const SAMPLE = SOM_SAMPLE_MASK as u64;
+        #[doc = "Texture Filter mask"]
+        const TF = SOM_TF_MASK as u64;
+        #[doc = "RGB Dithering mask"]
+        const RGBDITHER = SOM_RGBDITHER_MASK as u64;
+        #[doc = "Alpha Dithering mask"]
+        const ALPHADITHER = SOM_ALPHADITHER_MASK as u64;
+        #[doc = "RDPQ special state: mask for LOD interpolation formulas"]
+        const X_LOD_INTERP = SOMX_LOD_INTERP_MASK as u64;
+        #[doc = "RDPQ special state: reduced antialiasing is enabled"]
+        const X_AA_REDUCED = SOMX_AA_REDUCED as u64;
+        #[doc = "RDPQ special state: render mode update is frozen (see #rdpq_mode_begin)"]
+        const X_UPDATE_FREEZE = SOMX_UPDATE_FREEZE as u64;
+        #[doc = "Blender: mask of settings related to pass 0"]
+        const BLEND0 = SOM_BLEND0_MASK as u64;
+        #[doc = "Blender: mask of settings related to pass 1"]
+        const BLEND1 = SOM_BLEND1_MASK as u64;
+        #[doc = "Blender: mask of all settings"]
+        const BLEND = SOM_BLEND_MASK as u64;
+        #[doc = "RDPQ special state: record that the blender is made of 2 passes"]
+        const X_BLEND_2PASS = SOMX_BLEND_2PASS as u64;
+        #[doc = "Activate blending for all pixels"]
+        const BLENDING = SOM_BLENDING as u64;
+        #[doc = "Blender alpha configuration mask"]
+        const BLALPHA = SOM_BLALPHA_MASK as u64;
+        #[doc = "Z-mode mask"]
+        const ZMODE = SOM_ZMODE_MASK as u64;
+        #[doc = "Activate Z-buffer write"]
+        const Z_WRITE = SOM_Z_WRITE as u64;
+        #[doc = "Activate Z-buffer compare"]
+        const Z_COMPARE = SOM_Z_COMPARE as u64;
+        #[doc = "Z-source mask"]
+        const ZSOURCE = SOM_ZSOURCE_MASK as u64;
+        #[doc = "Alpha Compare mask"]
+        const ALPHACOMPARE = SOM_ALPHACOMPARE_MASK as u64;
+        #[doc = "Enable reads from framebuffer"]
+        const READ_ENABLE = SOM_READ_ENABLE as u64;
+        #[doc = "Enable anti-alias"]
+        const AA_ENABLE = SOM_AA_ENABLE as u64;
+        #[doc = "Coverage mask"]
+        const COVERAGE_DEST = SOM_COVERAGE_DEST_MASK as u64;
         #[doc = "Update color buffer only on coverage overflow"]
         const COLOR_ON_CVG_OVERFLOW = SOM_COLOR_ON_CVG_OVERFLOW as u64;
     }

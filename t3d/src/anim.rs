@@ -1,4 +1,7 @@
-use core::{cell::UnsafeCell, marker::PhantomData};
+use core::{
+    cell::{Cell, UnsafeCell},
+    marker::PhantomData,
+};
 
 use dragon::fmath::{Quat, Vec3};
 
@@ -6,9 +9,9 @@ use crate::Skeleton;
 
 #[derive(Debug)]
 #[repr(transparent)]
-pub struct Anim<'m, 's, 't>(
+pub struct Anim<'m, 's>(
     pub(crate) UnsafeCell<sys::T3DAnim>,
-    PhantomData<(&'s Skeleton<'m>, &'t mut ())>,
+    PhantomData<&'s Skeleton<'m>>,
 );
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -20,7 +23,15 @@ pub enum AnimTarget {
     Rotation = sys::T3D_ANIM_TARGET_ROTATION as _,
 }
 
-impl<'m, 's, 't> Anim<'m, 's, 't> {
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
+#[repr(i32)]
+pub enum AnimUpdate {
+    None = 0,
+    Changed = 1,
+    Looped = 2,
+}
+
+impl<'m, 's> Anim<'m, 's> {
     #[inline]
     pub fn new(model: &'m crate::Model, name: &core::ffi::CStr) -> Self {
         Self(
@@ -37,25 +48,55 @@ impl<'m, 's, 't> Anim<'m, 's, 't> {
         unsafe { sys::t3d_anim_attach(self.as_ptr(), skeleton.as_ptr() as _) }
     }
     #[inline]
-    pub fn attach_pos(&self, target_idx: u32, target: &'t mut Vec3, update_flag: &'t mut i32) {
+    pub fn attach_pos(
+        &self,
+        target_idx: u32,
+        target: &'s Cell<Vec3>,
+        update_flag: &'s Cell<AnimUpdate>,
+    ) {
         unsafe {
-            sys::t3d_anim_attach_pos(self.as_ptr(), target_idx, target.as_mut_ptr(), update_flag)
+            sys::t3d_anim_attach_pos(
+                self.as_ptr(),
+                target_idx,
+                target.as_ptr().cast(),
+                update_flag.as_ptr().cast(),
+            )
         }
     }
     #[inline]
-    pub fn attach_rot(&self, target_idx: u32, target: &'t mut Quat, update_flag: &'t mut i32) {
+    pub fn attach_rot(
+        &self,
+        target_idx: u32,
+        target: &'s Cell<Quat>,
+        update_flag: &'s Cell<AnimUpdate>,
+    ) {
         unsafe {
-            sys::t3d_anim_attach_rot(self.as_ptr(), target_idx, target.as_mut_ptr(), update_flag)
+            sys::t3d_anim_attach_rot(
+                self.as_ptr(),
+                target_idx,
+                target.as_ptr().cast(),
+                update_flag.as_ptr().cast(),
+            )
         }
     }
     #[inline]
-    pub fn attach_scale(&self, target_idx: u32, target: &'t mut Vec3, update_flag: &'t mut i32) {
+    pub fn attach_scale(
+        &self,
+        target_idx: u32,
+        target: &'s Cell<Vec3>,
+        update_flag: &'s Cell<AnimUpdate>,
+    ) {
         unsafe {
-            sys::t3d_anim_attach_scale(self.as_ptr(), target_idx, target.as_mut_ptr(), update_flag)
+            sys::t3d_anim_attach_scale(
+                self.as_ptr(),
+                target_idx,
+                target.as_ptr().cast(),
+                update_flag.as_ptr().cast(),
+            )
         }
     }
     #[inline]
-    pub fn update(&self, delta_time: f32) {
+    pub unsafe fn update(&self, delta_time: f32) {
         unsafe { sys::t3d_anim_update(self.as_ptr(), delta_time) }
     }
     #[inline]
@@ -76,7 +117,7 @@ impl<'m, 's, 't> Anim<'m, 's, 't> {
     }
 }
 
-impl<'m, 's, 't> Drop for Anim<'m, 's, 't> {
+impl<'m, 's> Drop for Anim<'m, 's> {
     #[inline]
     fn drop(&mut self) {
         unsafe { sys::t3d_anim_destroy(self.0.get()) }
